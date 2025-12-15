@@ -29,7 +29,7 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public ResponseEntity<Student> findStudent(long id) {
-// Проверка некорректного ID
+
         if (id <= 0) {
             return ResponseEntity.badRequest().build();
         }
@@ -45,18 +45,17 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public ResponseEntity<Void> deleteStudent(long id) {
-// Проверка на недопустимые значения id
         if (id <= 0) {
-            return ResponseEntity.badRequest().build(); // 400 Bad Request
+            return ResponseEntity.badRequest().build();
         }
 
         Optional<Student> studentOptional = studentRepository.findById(id);
         if (!studentOptional.isPresent()) {
-            return ResponseEntity.notFound().build(); // 404 Not Found
+            return ResponseEntity.notFound().build();
         }
 
         studentRepository.deleteById(id);
-        return ResponseEntity.noContent().build(); // 204 No Content
+        return ResponseEntity.noContent().build();
     }
 
     @Override
