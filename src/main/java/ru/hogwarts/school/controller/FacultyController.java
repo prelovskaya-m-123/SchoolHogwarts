@@ -1,13 +1,19 @@
 package ru.hogwarts.school.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
+
 import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.service.FacultyService;
-import java.util.Collection;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/faculty")
@@ -30,13 +36,13 @@ public class FacultyController {
     }
 
     @PostMapping
-    public ResponseEntity<Faculty> createFaculty(@RequestBody Faculty faculty) {
+    public ResponseEntity<Faculty> createFaculty(@Valid @RequestBody Faculty faculty) {
         Faculty createdFaculty = facultyService.addFaculty(faculty);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdFaculty);
     }
 
     @PutMapping
-    public ResponseEntity<Faculty> editFaculty(@RequestBody Faculty faculty) {
+    public ResponseEntity<Faculty> editFaculty(@Valid @RequestBody Faculty faculty) {
         Faculty foundFaculty = facultyService.editFaculty(faculty);
         if (foundFaculty == null) {
             return ResponseEntity.notFound().build();
@@ -49,9 +55,11 @@ public class FacultyController {
         return facultyService.deleteFaculty(id);
     }
 
-    @GetMapping ("/search")
-    public ResponseEntity<Collection<Faculty>> findFaculties(@RequestParam(required = false) String name,
-                                                             @RequestParam(required = false) String color) {
+    @GetMapping("/search")
+    public ResponseEntity<Collection<Faculty>> findFaculties(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String color) {
+
         if (name != null && !name.isBlank()) {
             return ResponseEntity.ok(facultyService.findByNameIgnoreCase(name));
         }
