@@ -5,20 +5,29 @@ import java.util.Optional;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
+import ru.hogwarts.school.repository.FacultyRepository;
 import ru.hogwarts.school.repository.StudentRepository;
 
 @Service
 public class StudentServiceImpl implements StudentService {
 
     private final StudentRepository studentRepository;
+    private final FacultyRepository facultyRepository;
 
-    public StudentServiceImpl(StudentRepository studentRepository) {
+    public StudentServiceImpl(StudentRepository studentRepository, FacultyRepository facultyRepository) {
         this.studentRepository = studentRepository;
+        this.facultyRepository = facultyRepository;
     }
 
     @Override
     public Student addStudent(Student student) {
+        Faculty faculty = student.getFaculty();
+        if (faculty != null) {
+            faculty.getStudents().add(student);
+            facultyRepository.save(faculty);
+        }
         return studentRepository.save(student);
     }
 

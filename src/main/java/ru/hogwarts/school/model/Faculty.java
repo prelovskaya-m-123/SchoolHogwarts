@@ -14,7 +14,8 @@ public class Faculty {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    private String name, color;
+    private String name;
+    private String color;
 
     public Faculty() {
     }
@@ -25,7 +26,7 @@ public class Faculty {
         this.color = color;
     }
 
-    @OneToMany(mappedBy = "faculty")
+    @OneToMany(mappedBy = "faculty", fetch = FetchType.EAGER)
     private Collection<Student> students = new ArrayList<>();
 
     public long getId() {
