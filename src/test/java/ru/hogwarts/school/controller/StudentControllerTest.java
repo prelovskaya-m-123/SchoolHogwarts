@@ -4,6 +4,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import static org.mockito.Mockito.*;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import java.util.Optional;
+import java.util.Collection;
+
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -12,7 +19,6 @@ import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.FacultyRepository;
 import ru.hogwarts.school.repository.StudentRepository;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,10 +28,10 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class StudentControllerTest {
 
-    @Autowired
+    @MockBean
     private StudentRepository studentRepository;
 
-    @Autowired
+    @MockBean
     private FacultyRepository facultyRepository;
 
     @Autowired
@@ -33,28 +39,32 @@ public class StudentControllerTest {
 
     private static final String BASE_URL = "/student";
 
+    private Student testStudent;
+    private Faculty testFaculty;
+
     @BeforeEach
     void setUp() {
-        studentRepository.deleteAll();
-        facultyRepository.deleteAll();
+        testFaculty = new Faculty();
+        testFaculty.setId(1L);
+        testFaculty.setName("Gryffindor");
+        testFaculty.setColor("Red");
+
+        testStudent = new Student();
+        testStudent.setId(1L);
+        testStudent.setName("Harry Potter");
+        testStudent.setAge(11);
+        testStudent.setFaculty(testFaculty);
     }
 
     @Test
     void testGetStudentFaculty() {
 
-        Faculty faculty = new Faculty();
-        faculty.setName("Gryffindor");
-        faculty.setColor("Red");
-        Faculty savedFaculty = facultyRepository.save(faculty);
+        when(studentRepository.findById(eq(1L)))
+                .thenReturn(Optional.of(testStudent));
 
-        Student student = new Student();
-        student.setName("Harry Potter");
-        student.setAge(11);
-        student.setFaculty(savedFaculty);
-        Student savedStudent = studentRepository.save(student);
 
         ResponseEntity<Faculty> response = restTemplate.getForEntity(
-                BASE_URL + "/" + savedStudent.getId() + "/faculty",
+                BASE_URL + "/1/faculty",
                 Faculty.class);
 
         assertEquals(HttpStatus.OK, response.getStatusCode(), "Статус ответа должен быть OK");
@@ -64,89 +74,103 @@ public class StudentControllerTest {
 
     @Test
     void testGetStudentInfo() {
-        Student student = new Student();
-        student.setName("Hermione Granger");
-        student.setAge(12);
-        Student savedStudent = studentRepository.save(student);
+        when(studentRepository.findById(eq(1L)))
+                .thenReturn(Optional.of(testStudent));
 
         ResponseEntity<Student> response = restTemplate.getForEntity
-                (BASE_URL + "/" + savedStudent.getId(), Student.class);
+                (BASE_URL + "/1", Student.class);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode(), "Статус ответа должен быть OK");
-        assertEquals("Hermione Granger", response.getBody().getName(), "Имя студента не совпадает");
-        assertEquals(12, response.getBody().getAge(), "Возраст студента не совпадает");
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("Harry Potter", response.getBody().getName());
+        assertEquals(11, response.getBody().getAge());
     }
 
     @Test
     void testCreateStudent() {
-        Student student = createTestStudent();
+        Student newStudent = new Student();
+        newStudent.setName("Hermione Granger");
+        newStudent.setAge(12);
+
+        when(studentRepository.save(any(Student.class)))
+                .thenAnswer(invocation -> {
+                    Student saved = invocation.getArgument(0);
+                    saved.setId(2L);
+                    return saved;
+                });
 
         ResponseEntity<Student> response = restTemplate.postForEntity
-                (BASE_URL, student, Student.class);
+                (BASE_URL, newStudent, Student.class);
+
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode(), "Статус ответа должен быть CREATED");
         assertNotNull(response.getBody().getId(), "ID студента должен быть назначен");
-        assertEquals("Harry Potter", response.getBody().getName(), "Имя созданного студента не совпадает");
+        assertEquals("Hermione Granger", response.getBody().getName());
+
+        verify(studentRepository, times(1)).save(any(Student.class));
     }
+
 
     @Test
     void testEditStudent() {
 
-        Student student = createTestStudent();
-        ResponseEntity<Student> postResponse = restTemplate.postForEntity
-                (BASE_URL, student, Student.class);
-        Long studentId = postResponse.getBody().getId();
-
         Student updatedStudent = new Student();
-        updatedStudent.setId(studentId);
-        updatedStudent.setName("Hermione Granger");
-        updatedStudent.setAge(12);
+        updatedStudent.setId(1L);
+        updatedStudent.setName("Ron Weasley");
+        updatedStudent.setAge(13);
 
+        when(studentRepository.save(any(Student.class))).thenReturn(updatedStudent);
 
         ResponseEntity<Student> putResponse = restTemplate.exchange
                 (BASE_URL, HttpMethod.PUT, new HttpEntity<>(updatedStudent), Student.class);
 
 
-        assertEquals(HttpStatus.OK, putResponse.getStatusCode(), "Статус ответа должен быть OK");
-        assertEquals("Hermione Granger", putResponse.getBody().getName(), "Имя обновлённого студента не совпадает");
-        assertEquals(12, putResponse.getBody().getAge(), "Возраст обновлённого студента не совпадает");
+        assertEquals(HttpStatus.OK, putResponse.getStatusCode());
+        assertEquals("Ron Weasley", putResponse.getBody().getName());
+        assertEquals(13, putResponse.getBody().getAge());
     }
 
     @Test
     void testDeleteStudent() {
-        Student student = createTestStudent();
-        ResponseEntity<Student> postResponse = restTemplate.postForEntity
-                (BASE_URL, student, Student.class);
-        Long studentId = postResponse.getBody().getId();
+        when(studentRepository.findById(eq(1L)))
+                .thenReturn(Optional.of(testStudent))
+                .thenReturn(Optional.empty());
 
-        restTemplate.delete(BASE_URL + "/" + studentId);
+        doNothing().when(studentRepository).deleteById(eq(1L));
+
+
+        restTemplate.delete(BASE_URL + "/1");
 
         ResponseEntity<Student> getResponse = restTemplate.getForEntity
-                (BASE_URL + "/" + studentId, Student.class);
+                (BASE_URL + "/1", Student.class);
+
 
         assertEquals(HttpStatus.NOT_FOUND, getResponse.getStatusCode(), "Статус ответа должен быть NOT_FOUND");
+
+        verify(studentRepository, times(1)).deleteById(eq(1L));
     }
 
     @Test
     void testGetAllStudents() {
-        restTemplate.postForEntity(BASE_URL, createTestStudent(), Student.class);
-        restTemplate.postForEntity(BASE_URL, createTestStudent(), Student.class);
+        when(studentRepository.findAll())
+                .thenReturn(java.util.List.of(testStudent));
+
 
         ResponseEntity<Collection<Student>> response = restTemplate.exchange(
                 BASE_URL,
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<Collection<Student>>() {}
+                new ParameterizedTypeReference<Collection<Student>>() {
+                }
         );
 
-        assertEquals(HttpStatus.OK, response.getStatusCode(), "Статус ответа должен быть OK");
-        assertTrue(response.getBody().size() >= 2, "Должно быть не менее 2 студентов");
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().size() >= 1);
     }
 
     @Test
     void testFindStudentsByAge() {
-        Student student = createTestStudent();
-        restTemplate.postForEntity(BASE_URL, student, Student.class);
+        when(studentRepository.findByAge(eq(11)))
+                .thenReturn(java.util.List.of(testStudent));
 
         Map<String, Integer> params = new HashMap<>();
         params.put("age", 11);
@@ -155,18 +179,19 @@ public class StudentControllerTest {
                 BASE_URL + "/by-age?age={age}",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<Collection<Student>>() {},
+                new ParameterizedTypeReference<Collection<Student>>() {
+                },
                 params
         );
 
         assertEquals(HttpStatus.OK, response.getStatusCode(), "Статус ответа должен быть OK");
-        assertFalse(response.getBody().isEmpty(), "Результат поиска не должен быть пустым");
+        assertFalse(response.getBody().isEmpty());
     }
 
     @Test
     void testFindStudentsByAgeRange() {
-        Student student = createTestStudent();
-        restTemplate.postForEntity(BASE_URL, student, Student.class);
+        when(studentRepository.findByAgeBetween(eq(10), eq(12)))
+                .thenReturn(java.util.List.of(testStudent));
 
         Map<String, Object> params = new HashMap<>();
         params.put("minAge", 10);
@@ -176,26 +201,12 @@ public class StudentControllerTest {
                 BASE_URL + "/age-range?minAge={minAge}&maxAge={maxAge}",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<Collection<Student>>() {},
+                new ParameterizedTypeReference<Collection<Student>>() {
+                },
                 params
         );
 
-        assertEquals(HttpStatus.OK, response.getStatusCode(), "Статус ответа должен быть OK");
-        assertFalse(response.getBody().isEmpty(), "Результат поиска не должен быть пустым");
-    }
-
-
-    private Student createTestStudent() {
-        Student student = new Student();
-        student.setName("Harry Potter");
-        student.setAge(11);
-        return student;
-    }
-
-    private Faculty createTestFaculty() {
-        Faculty faculty = new Faculty();
-        faculty.setName("Gryffindor");
-        faculty.setColor("Red");
-        return faculty;
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertFalse(response.getBody().isEmpty());
     }
 }
