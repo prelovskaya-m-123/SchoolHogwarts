@@ -1,5 +1,6 @@
 package ru.hogwarts.school.controller.test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,6 +33,8 @@ class FacultyControllerTest {
 
     @MockBean
     private FacultyService facultyService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
     void testGetFacultyInfo_ReturnsFaculty() throws Exception {
@@ -79,9 +82,7 @@ class FacultyControllerTest {
         Faculty createdFaculty = new Faculty(1L, "Slytherin", "Green");
         when(facultyService.addFaculty(faculty)).thenReturn(createdFaculty);
 
-        String facultyJson = """
-                {"id": 0, "name": "Slytherin", "color": "Green"}
-                """;
+        String facultyJson = objectMapper.writeValueAsString(faculty);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/faculty")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -98,9 +99,7 @@ class FacultyControllerTest {
         Faculty faculty = new Faculty(1L, "Ravenclaw", "Blue");
         when(facultyService.editFaculty(faculty)).thenReturn(faculty);
 
-        String facultyJson = """
-                {"id": 1, "name": "Ravenclaw", "color": "Blue"}
-                """;
+        String facultyJson = objectMapper.writeValueAsString(faculty);
 
         mockMvc.perform(MockMvcRequestBuilders.put("/faculty")
                         .contentType(MediaType.APPLICATION_JSON)

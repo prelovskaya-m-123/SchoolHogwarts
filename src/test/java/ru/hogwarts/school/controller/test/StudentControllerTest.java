@@ -1,5 +1,6 @@
 package ru.hogwarts.school.controller.test;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -37,6 +38,8 @@ class StudentControllerTest {
 @MockBean
 private StudentService studentService;
 
+private final ObjectMapper objectMapper = new ObjectMapper();
+
     @Test
     void testGetStudentInfo() throws Exception {
         Long studentId = 1L;
@@ -57,9 +60,7 @@ private StudentService studentService;
         Student createdStudent = new Student(1L, "New Student", 17);
         when(studentService.addStudent(student)).thenReturn(createdStudent);
 
-        String studentJson = """
-{"id": 0, "name": "New Student", "age": 17}
-""";
+        String studentJson = objectMapper.writeValueAsString(student);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/student")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -76,9 +77,7 @@ private StudentService studentService;
         Student student = new Student(1L, "Updated Student", 18);
         when(studentService.editStudent(student)).thenReturn(student);
 
-        String studentJson = """
-{"id": 1, "name": "Updated Student", "age": 18}
-""";
+        String studentJson = objectMapper.writeValueAsString(student);
 
         mockMvc.perform(MockMvcRequestBuilders.put("/student")
                         .contentType(MediaType.APPLICATION_JSON)
