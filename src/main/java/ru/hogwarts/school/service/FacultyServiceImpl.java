@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.repository.FacultyRepository;
+import ru.hogwarts.school.repository.StudentRepository;
 
 @Service
 public class FacultyServiceImpl implements FacultyService {
@@ -44,18 +45,18 @@ public class FacultyServiceImpl implements FacultyService {
 
     @Override
     public ResponseEntity<Void> deleteFaculty(long id) {
-// Проверка на недопустимые значения id
+
         if (id <= 0) {
-            return ResponseEntity.badRequest().build(); // 400 Bad Request
+            return ResponseEntity.badRequest().build();
         }
 
         Optional<Faculty> facultyOptional = facultyRepository.findById(id);
         if (!facultyOptional.isPresent()) {
-            return ResponseEntity.notFound().build(); // 404 Not Found
+            return ResponseEntity.notFound().build();
         }
 
         facultyRepository.deleteById(id);
-        return ResponseEntity.noContent().build(); // 204 No Content
+        return ResponseEntity.noContent().build();
     }
 
     @Override
