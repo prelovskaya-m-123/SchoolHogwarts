@@ -1,6 +1,10 @@
 package ru.hogwarts.school.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -49,6 +53,11 @@ public class AvatarController {
     public void downloadAvatar(@PathVariable Long id, HttpServletResponse response) throws IOException {
         Avatar avatar = avatarService.findAvatar(id);
 
+        if (avatar == null || avatar.getFilePath() == null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+
         Path path = Path.of(avatar.getFilePath());
 
         try (InputStream is = Files.newInputStream(path);
@@ -59,4 +68,22 @@ public class AvatarController {
             is.transferTo(os);
         }
     }
+    @GetMapping
+    public ResponseEntity<Page<Avatar>> getAvatars(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String sort) {
+
+        Pageable pageable;
+        if (sort != null && !sort.isEmpty()) {
+            pageable = PageRequest.of(page, size, Sort.by(sort));
+        } else {
+            pageable = PageRequest.of(page, size);
+        }
+
+        Page<Avatar> avatars = avatarService.getAllAvatars(pageable);
+
+        return ResponseEntity.ok(avatars);
+    }
+
 }
