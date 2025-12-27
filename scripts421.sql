@@ -4,15 +4,20 @@ ALTER TABLE student
 
 -- 2. Имена студентов должны быть уникальными и не равны нулю
 ALTER TABLE student
-    MODIFY COLUMN name VARCHAR(255) NOT NULL;
+    ALTER COLUMN name SET NOT NULL,
+    ALTER COLUMN name TYPE VARCHAR(255);
 
 ALTER TABLE student
     ADD CONSTRAINT uq_student_name UNIQUE (name);
 
 -- 3. Пара “значение названия” - “цвет факультета” должна быть уникальной
 ALTER TABLE faculty
-    MODIFY COLUMN name VARCHAR(255) NOT NULL,
-    MODIFY COLUMN color VARCHAR(50) NOT NULL;
+    ALTER COLUMN name SET NOT NULL,
+    ALTER COLUMN name TYPE VARCHAR(255);
+ALTER TABLE faculty
+    ALTER COLUMN color SET NOT NULL,
+    ALTER COLUMN color TYPE VARCHAR(50);
+
 
 ALTER TABLE faculty
     ADD CONSTRAINT uq_faculty_name_color UNIQUE (name, color);
