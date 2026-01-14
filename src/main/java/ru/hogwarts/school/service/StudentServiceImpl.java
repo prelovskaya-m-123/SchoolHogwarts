@@ -86,9 +86,11 @@ public class StudentServiceImpl implements StudentService {
     }
     @Override
     public List<String> getAllNamesStartingWithA() {
-        List<Student> students = studentRepository.findAllByNameStartsWithA();
-        return students.stream()
+        List<Student> allStudents = studentRepository.findAll();
+        return allStudents.stream()
                 .map(Student::getName)
+                .filter(name -> name != null && !name.isEmpty())
+                .filter(name -> name.toUpperCase().startsWith("A"))
                 .map(String::toUpperCase)
                 .sorted()
                 .collect(Collectors.toList());
@@ -96,7 +98,14 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public double getAverageAge() {
-        Double average = studentRepository.findAverageAge();
-        return average != null ? average : 0.0;
+        List<Student> allStudents = studentRepository.findAll();
+        if (allStudents.isEmpty()) {
+            return 0.0;
+        }
+
+        return allStudents.stream()
+                .mapToInt(Student::getAge)
+                .average()
+                .orElse(0.0);
     }
 }

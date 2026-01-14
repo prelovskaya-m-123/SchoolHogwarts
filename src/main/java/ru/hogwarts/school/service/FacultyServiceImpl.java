@@ -133,7 +133,17 @@ public class FacultyServiceImpl implements FacultyService {
 
     @Override
     public String getLongestFacultyName() {
-        return facultyRepository.findLongestName();
+        List<Faculty> allFaculties = facultyRepository.findAll();
+
+        if (allFaculties.isEmpty()) {
+            return null;
+        }
+
+        return allFaculties.stream()
+                .map(Faculty::getName)
+                .filter(name -> name != null && !name.isEmpty())
+                .max(Comparator.comparing(String::length))
+                .orElse(null);
     }
 }
 

@@ -12,6 +12,4 @@ public interface FacultyRepository extends JpaRepository<Faculty, Long> {
 
     Collection<Faculty> findByNameIgnoreCase(String name);
 
-    @Query(value = "SELECT name FROM faculty ORDER BY LENGTH(name) DESC LIMIT 1", nativeQuery = true)
-    String findLongestName();
 }
