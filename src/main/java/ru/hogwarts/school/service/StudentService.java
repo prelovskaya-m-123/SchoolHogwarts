@@ -4,6 +4,7 @@ import org.springframework.http.ResponseEntity;
 import ru.hogwarts.school.model.Student;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface StudentService {
 
@@ -20,4 +21,8 @@ public interface StudentService {
     Collection<Student> getAllStudents();
 
     Collection<Student> findByAgeBetween(int minAge, int maxAge);
+
+    List<String> getAllNamesStartingWithA();
+
+    double getAverageAge();
 }

@@ -19,4 +19,6 @@ public interface FacultyService {
     Collection<Faculty> findByNameIgnoreCase(String name);
 
     Collection<Faculty> getAllFaculties();
+
+    String getLongestFacultyName();
 }
