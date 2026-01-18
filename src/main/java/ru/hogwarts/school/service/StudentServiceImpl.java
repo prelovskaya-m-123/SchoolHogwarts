@@ -1,7 +1,9 @@
 package ru.hogwarts.school.service;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -81,5 +83,29 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public Collection<Student> findByAgeBetween(int minAge, int maxAge) {
         return studentRepository.findByAgeBetween(minAge, maxAge);
+    }
+    @Override
+    public List<String> getAllNamesStartingWithA() {
+        List<Student> allStudents = studentRepository.findAll();
+        return allStudents.stream()
+                .map(Student::getName)
+                .filter(name -> name != null && !name.isEmpty())
+                .filter(name -> name.toUpperCase().startsWith("A"))
+                .map(String::toUpperCase)
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public double getAverageAge() {
+        List<Student> allStudents = studentRepository.findAll();
+        if (allStudents.isEmpty()) {
+            return 0.0;
+        }
+
+        return allStudents.stream()
+                .mapToInt(Student::getAge)
+                .average()
+                .orElse(0.0);
     }
 }

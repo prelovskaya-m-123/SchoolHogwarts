@@ -1,8 +1,6 @@
 package ru.hogwarts.school.service;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Optional;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,4 +130,20 @@ public class FacultyServiceImpl implements FacultyService {
         }
         return allFaculties;
     }
+
+    @Override
+    public String getLongestFacultyName() {
+        List<Faculty> allFaculties = facultyRepository.findAll();
+
+        if (allFaculties.isEmpty()) {
+            return null;
+        }
+
+        return allFaculties.stream()
+                .map(Faculty::getName)
+                .filter(name -> name != null && !name.isEmpty())
+                .max(Comparator.comparing(String::length))
+                .orElse(null);
+    }
 }
+
