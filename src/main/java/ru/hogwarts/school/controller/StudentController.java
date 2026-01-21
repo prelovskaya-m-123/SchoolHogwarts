@@ -8,6 +8,7 @@ import ru.hogwarts.school.model.Faculty;
 import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.service.StudentService;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -102,5 +103,94 @@ public class StudentController {
         double averageAge = studentService.getAverageAge();
         return ResponseEntity.ok(averageAge);
     }
+
+    @GetMapping("/print-parallel")
+    public ResponseEntity<Void> printStudentsParallel() {
+        Collection<Student> studentsCollection = studentService.getAllStudents();
+
+       List<Student> students = new ArrayList<>(studentsCollection);
+
+        if (students.size() < 6) {
+            students.stream()
+                    .map(Student::getName)
+                    .filter(name -> name != null && !name.isEmpty())
+                    .forEach(System.out::println);
+            return ResponseEntity.ok().build();
+        }
+
+        System.out.println(students.get(0).getName());
+        System.out.println(students.get(1).getName());
+
+        Thread thread1 = new Thread(() -> {
+            System.out.println(students.get(2).getName());
+            System.out.println(students.get(3).getName());
+        });
+
+        Thread thread2 = new Thread(() -> {
+            System.out.println(students.get(4).getName());
+            System.out.println(students.get(5).getName());
+        });
+
+        thread1.start();
+        thread2.start();
+
+        try {
+            thread1.join();
+            thread2.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    private synchronized void printStudentName(String name) {
+        if (name != null && !name.isEmpty()) {
+            System.out.println(name);
+        }
+    }
+
+    @GetMapping("/print-synchronized")
+    public ResponseEntity<Void> printStudentsSynchronized() {
+        Collection<Student> studentsCollection = studentService.getAllStudents();
+        List<Student> students = new ArrayList<>(studentsCollection);
+
+        if (students.size() < 6) {
+            students.stream()
+                    .map(Student::getName)
+                    .forEach(this::printStudentName);
+            return ResponseEntity.ok().build();
+        }
+
+        printStudentName(students.get(0).getName());
+        printStudentName(students.get(1).getName());
+
+        Thread thread1 = new Thread(() -> {
+            printStudentName(students.get(2).getName());
+            printStudentName(students.get(3).getName());
+        });
+
+        Thread thread2 = new Thread(() -> {
+            printStudentName(students.get(4).getName());
+            printStudentName(students.get(5).getName());
+        });
+
+        thread1.start();
+        thread2.start();
+
+        try {
+            thread1.join();
+            thread2.join();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        return ResponseEntity.ok().build();
+    }
 }
+
+
+
 
